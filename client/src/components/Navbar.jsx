@@ -6,9 +6,9 @@ import { BsCoin } from "react-icons/bs";
 import { HiOutlineLogout } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
 import { setUserData } from "../redux/userSlice";
 import { ServerUrl } from "../App";
+import AuthModel from "../components/AuthModel";
 
 function Navbar() {
 
@@ -16,7 +16,7 @@ function Navbar() {
 
   const [showCreditPopup, setShowCreditPopup] = React.useState(false);
   const [showUserPopup, setShowUserPopup] = React.useState(false);
-
+  const [showAuth,setShowAuth] = React.useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -87,6 +87,10 @@ function Navbar() {
 
             <button
               onClick={() => {
+                if(!userData?.user) {
+                  setShowAuth(true);
+                  return;
+                }
                 setShowCreditPopup(!showCreditPopup);
                 setShowUserPopup(false);
               }}
@@ -120,6 +124,10 @@ function Navbar() {
 
             <button
               onClick={() => {
+                if(!userData?.user) {
+                    setShowAuth(true);
+                    return;
+                }
                 setShowUserPopup(!showUserPopup);
                 setShowCreditPopup(false);
               }}
@@ -160,6 +168,8 @@ function Navbar() {
         </div>
 
       </motion.div>
+
+      {showAuth && <AuthModel onClose={()=> setShowAuth(false)}/>}
 
     </div>
   );
