@@ -2,10 +2,14 @@ import React, { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
+import { useDispatch } from "react-redux";
+import { setUserData, clearUserData } from "./redux/userSlice";
 
 export const ServerUrl = "http://localhost:8000";
 
 function App() {
+
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const getUser = async () => {
@@ -17,16 +21,18 @@ function App() {
         });
 
         const data = await res.json();
-        console.log(data);
+
+        dispatch(setUserData(data));
 
       } catch (err) {
         console.error(err);
+        dispatch(clearUserData());
       }
     };
 
     getUser();
 
-  }, []);
+  }, [dispatch]);
 
   return (
     <Routes>

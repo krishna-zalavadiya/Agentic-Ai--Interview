@@ -6,11 +6,12 @@ import { motion } from "framer-motion";
 import { FcGoogle } from "react-icons/fc";
 import { auth, provider } from "../utils/firebase";
 import { signInWithPopup } from "firebase/auth";
-
+import { useDispatch } from "react-redux";
+import { setUserData, clearUserData } from "../redux/userSlice";
 const ServerUrl = "http://localhost:8000";
 
 function Auth() {
-
+  const dispatch = useDispatch();
   const handleGoogleAuth = async () => {
     try {
 
@@ -26,11 +27,13 @@ function Auth() {
         { name, email },
         { withCredentials: true }
       );
+      dispatch(setUserData(result.data));
 
       console.log("Login Success:", result.data);
 
     } catch (error) {
       console.error("Google authentication failed:", error);
+      dispatch(clearUserData());
     }
   };
 
@@ -51,13 +54,16 @@ function Auth() {
           <h2 className="font-semibold text-lg">InterviewIQ.AI</h2>
         </div>
 
-        <h1 className="text-2xl md:text-3xl font-semibold text-center leading-snug mb-4">
-          Continue with
-          <span className="bg-green-100 text-green-600 px-3 py-1 rounded-full inline-flex items-center gap-2 ml-2">
-            <IoSparklesSharp size={18} />
-            AI Smart Interview Assistant
-          </span>
+        <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-center leading-snug mb-4">
+        Continue with
         </h1>
+
+      <div className="flex justify-center">
+           <span className="bg-green-100 text-green-600 px-4 py-2 rounded-full inline-flex items-center gap-2 text-lg md:text-xl font-medium">
+            <IoSparklesSharp size={20} />
+            AI Smart Interview Assistant
+            </span>
+      </div>
 
         <p className="text-gray-500 text-center text-sm md:text-base leading-relaxed mb-8">
           Sign in to your account to continue
