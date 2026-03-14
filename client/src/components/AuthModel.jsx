@@ -8,7 +8,7 @@ function AuthModel({ onClose }) {
   const { userData } = useSelector((state) => state.user);
 
   useEffect(() => {
-    if (userData) {
+    if (userData?.user) {
       onClose();
     }
   }, [userData, onClose]);
