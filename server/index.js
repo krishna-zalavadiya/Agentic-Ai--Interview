@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import connectDb from "./config/db.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-
+import interviewRouter from "./routes/interview.route.js";
 import router from "./routes/auth.route.js";
 import userRouter from "./routes/user.routes.js";
 
@@ -22,6 +22,7 @@ app.use(cookieParser());
 
 app.use("/api/auth", router);
 app.use("/api/user", userRouter);
+app.use("/api/interview", interviewRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
