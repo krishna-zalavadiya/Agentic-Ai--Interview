@@ -12,14 +12,14 @@ function InterviewReport() {
   return (
     <div className='min-h-screen bg-gray-50'>
 
-      {step === 1 && (
-        <Step1SetUp
-          onStart={(data) => {
-            setInterviewData(data);
-          }}
-          setStep={setStep}
-        />
-      )}
+{step === 1 && (
+  <Step1SetUp
+    onStart={(data) => {
+      setInterviewData(data);
+      setStep(2); // This must be INSIDE the curly braces of the onStart function
+    }}
+  />
+)}
 
       {step === 2 && (
         <Step2Interview

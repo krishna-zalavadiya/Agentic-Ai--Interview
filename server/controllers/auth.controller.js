@@ -21,7 +21,7 @@ export const googleAuth = async (req, res) => {
       });
     }
 
-    const token = genToken(user._id);
+    const token = genToken(userId);
 
     res.cookie("token", token, {
       httpOnly: true,

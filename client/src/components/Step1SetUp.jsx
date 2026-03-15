@@ -1,71 +1,151 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { FaUser, FaMicrophone, FaChartLine } from "react-icons/fa";
 import { FiUpload } from "react-icons/fi";
 import axios from "axios";
 
+const api = axios.create({
+  baseURL: "http://localhost:8000",
+  withCredentials: true
+});
+
 function Step1SetUp({ onStart }) {
 
-  const [role, setRole] = React.useState("");
-  const [experience, setExperience] = React.useState("");
-  const [type, setType] = React.useState("Technical Interview");
+  const [role, setRole] = useState("");
+  const [experience, setExperience] = useState("");
+  const [type, setType] = useState("Technical Interview");
 
-  const [resume, setResume] = React.useState(null);
-  const [resumeData, setResumeData] = React.useState(null);
-  const [analyzing, setAnalyzing] = React.useState(false);
+  const [resumeFile, setResumeFile] = useState(null);
+  const [resumeData, setResumeData] = useState(null);
 
-  // Resume Upload + Analysis
-  const handleResumeUpload = async (file) => {
+  const [isAnalyzingResume, setIsAnalyzingResume] = useState(false);
+  const [isStartingInterview, setIsStartingInterview] = useState(false);
+
+  const [error, setError] = useState("");
+
+  const validateFile = (file) => {
+    if (!file) return false;
+
+    const isPDF = file.type === "application/pdf";
+    const isSmall = file.size < 5 * 1024 * 1024;
+
+    if (!isPDF) {
+      alert("Only PDF resumes are allowed.");
+      return false;
+    }
+
+    if (!isSmall) {
+      alert("Resume must be smaller than 5MB.");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleResumeUpload = useCallback(async (file) => {
+
+    if (!validateFile(file)) return;
 
     try {
 
-      setResume(file);
-      setAnalyzing(true);
+      setResumeFile(file);
+      setIsAnalyzingResume(true);
+      setError("");
 
       const formData = new FormData();
       formData.append("resume", file);
 
-      const response = await axios.post(
-  "http://localhost:8000/api/interview/resume",
-  formData,
-  {
-    headers: {
-      "Content-Type": "multipart/form-data"
-    },
-    withCredentials: true
-  }
-);
+      const response = await api.post(
+        "/api/interview/analyze-resume",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        }
+      );
 
       const data = response.data;
 
       setResumeData(data);
 
-      // Autofill form
-      setRole(data.role || "");
-      setExperience(data.experience || "");
+      if (data.role) setRole(data.role);
+      if (data.experience) setExperience(data.experience);
 
-    } catch (error) {
+    } catch (err) {
 
-      console.error("Resume analysis failed:", error);
+      console.error(err);
+      setError("Resume analysis failed. Please try again.");
 
     } finally {
 
-      setAnalyzing(false);
+      setIsAnalyzingResume(false);
 
     }
-  };
 
-  // Start Interview
-  const handleStart = () => {
+  }, []);
 
-    onStart({
-      role,
-      experience,
-      type,
-      resumeData
-    });
+  const handleStart = useCallback(async () => {
 
-  };
+    if (!role.trim() || !experience.trim()) {
+      alert("Please enter role and experience.");
+      return;
+    }
+
+    if (isAnalyzingResume) {
+      alert("Resume analysis still running.");
+      return;
+    }
+
+    try {
+
+      setIsStartingInterview(true);
+      setError("");
+
+      const response = await api.post(
+        "/api/interview/generate-questions",
+        {
+          role: role.trim(),
+          experience: experience.trim(),
+          mode: type,
+          resumeText: resumeData?.resumeText || "",
+          skills: resumeData?.skills || [],
+          projects: resumeData?.projects || []
+        }
+      );
+
+      const result = response.data;
+
+      if (!result.success) {
+        throw new Error(result.message || "Interview generation failed");
+      }
+
+      onStart({
+        interviewId: result.interviewId,
+        questions: result.questions,
+        role,
+        experience,
+        type,
+        remainingCredits: result.remainingCredits
+      });
+
+    } catch (err) {
+
+      console.error(err);
+
+      if (err.response?.status === 403) {
+        alert("Insufficient credits. You need 100 credits.");
+      } else {
+        setError(err.response?.data?.message || "Failed to start interview.");
+      }
+
+    } finally {
+
+      setIsStartingInterview(false);
+
+    }
+
+  }, [role, experience, type, resumeData, isAnalyzingResume, onStart]);
 
   return (
 
@@ -91,8 +171,8 @@ function Step1SetUp({ onStart }) {
           </h2>
 
           <p className="text-gray-700 mb-8">
-            Practice real interview scenarios powered by AI. Improve communication,
-            technical skills, and confidence.
+            Practice real interview scenarios powered by AI.
+            Improve communication, technical skills, and confidence.
           </p>
 
           <div className="space-y-4">
@@ -129,7 +209,11 @@ function Step1SetUp({ onStart }) {
             Interview Setup
           </h2>
 
-          {/* Role */}
+          {error && (
+            <div className="bg-red-100 text-red-600 p-3 rounded mb-4 text-sm">
+              {error}
+            </div>
+          )}
 
           <input
             type="text"
@@ -139,8 +223,6 @@ function Step1SetUp({ onStart }) {
             onChange={(e) => setRole(e.target.value)}
           />
 
-          {/* Experience */}
-
           <input
             type="text"
             placeholder="Experience (e.g. 2 years)"
@@ -148,8 +230,6 @@ function Step1SetUp({ onStart }) {
             value={experience}
             onChange={(e) => setExperience(e.target.value)}
           />
-
-          {/* Interview Type */}
 
           <select
             className="w-full border rounded-lg px-4 py-3 mb-6"
@@ -161,36 +241,27 @@ function Step1SetUp({ onStart }) {
             <option>Mixed Interview</option>
           </select>
 
-          {/* Resume Upload */}
-
           <label className="border-2 border-dashed border-green-400 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-green-50 transition mb-6">
 
             <FiUpload size={28} className="text-green-600 mb-2" />
 
-            {analyzing ? (
-
-              <p className="text-green-600 text-sm">
-                Analyzing resume...
+            {isAnalyzingResume ? (
+              <p className="text-green-600 text-sm">Analyzing resume...</p>
+            ) : resumeFile ? (
+              <p className="text-green-700 text-sm font-medium">
+                ✔ {resumeFile.name}
               </p>
-
-            ) : resume ? (
-
-              <p className="text-green-700 font-medium text-sm">
-                ✔ {resume.name}
-              </p>
-
             ) : (
-
               <p className="text-gray-600 text-sm">
-                Click to upload resume (Optional)
+                Click to upload resume (optional)
               </p>
-
             )}
 
             <input
               type="file"
               accept="application/pdf"
               className="hidden"
+              disabled={isAnalyzingResume}
               onChange={(e) => {
                 const file = e.target.files[0];
                 if (file) handleResumeUpload(file);
@@ -199,81 +270,49 @@ function Step1SetUp({ onStart }) {
 
           </label>
 
-          {/* Resume Analysis Result */}
-
           {resumeData && (
-
             <div className="bg-gray-50 border rounded-xl p-4 mb-6">
 
               <h3 className="text-sm font-semibold mb-3">
-                Resume Analysis Result
+                Resume Analysis
               </h3>
 
-              {/* Projects */}
-
               {resumeData.projects?.length > 0 && (
-
                 <div className="mb-3">
-
-                  <p className="text-xs text-gray-500 mb-1">
-                    Projects:
-                  </p>
-
-                  <ul className="list-disc list-inside text-sm text-gray-700">
-
-                    {resumeData.projects.map((project, index) => (
-                      <li key={index}>{project}</li>
+                  <p className="text-xs text-gray-500 mb-1">Projects</p>
+                  <ul className="list-disc list-inside text-sm">
+                    {resumeData.projects.map((p, i) => (
+                      <li key={i}>{p}</li>
                     ))}
-
                   </ul>
-
                 </div>
-
               )}
 
-              {/* Skills */}
-
               {resumeData.skills?.length > 0 && (
-
                 <div>
-
-                  <p className="text-xs text-gray-500 mb-2">
-                    Skills:
-                  </p>
-
+                  <p className="text-xs text-gray-500 mb-2">Skills</p>
                   <div className="flex flex-wrap gap-2">
-
-                    {resumeData.skills.map((skill, index) => (
-
+                    {resumeData.skills.map((s, i) => (
                       <span
-                        key={index}
+                        key={i}
                         className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-md"
                       >
-                        {skill}
+                        {s}
                       </span>
-
                     ))}
-
                   </div>
-
                 </div>
-
               )}
 
             </div>
-
           )}
-
-          {/* Start Interview Button */}
 
           <button
             onClick={handleStart}
-            disabled={analyzing}
+            disabled={isStartingInterview || isAnalyzingResume}
             className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
           >
-
-            {analyzing ? "Analyzing Resume..." : "Start Interview"}
-
+            {isStartingInterview ? "Starting Interview..." : "Start Interview"}
           </button>
 
         </motion.div>
@@ -281,9 +320,7 @@ function Step1SetUp({ onStart }) {
       </div>
 
     </motion.div>
-
   );
-
 }
 
 export default Step1SetUp;
