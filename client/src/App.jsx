@@ -5,7 +5,7 @@ import Auth from "./pages/Auth";
 import { useDispatch } from "react-redux";
 import { setUserData, clearUserData } from "./redux/userSlice";
 import InterviewPage from "./pages/InterviewPage";
-export const ServerUrl = "http://localhost:8000";
+export const ServerUrl = "https://agentic-ai-interview.onrender.com";
 
 function App() {
 
