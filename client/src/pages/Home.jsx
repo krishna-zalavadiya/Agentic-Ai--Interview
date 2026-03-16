@@ -160,20 +160,7 @@ function Home() {
                 Get Started
               </motion.button>
 
-              <motion.button
-                onClick={() => {
-                  if (!userData?.user) {
-                    setShowAuth(true);
-                    return;
-                  }
-                  navigate("/history");
-                }}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="bg-white border border-gray-300 text-gray-700 px-6 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors"
-              >
-                Interview History
-              </motion.button>
+              
 
             </div>
           </div>

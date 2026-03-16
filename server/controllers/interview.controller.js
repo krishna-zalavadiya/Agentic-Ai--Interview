@@ -444,7 +444,7 @@ export const finishInterview = async (req, res) => {
     }
 
     /* ----------------------------------
-       METRIC AGGREGATION LOGIC
+        METRIC AGGREGATION LOGIC
     ---------------------------------- */
     const totalQuestions = interview.questions.length;
 
@@ -456,16 +456,16 @@ export const finishInterview = async (req, res) => {
       return acc;
     }, { correctness: 0, communication: 0, confidence: 0 });
 
-    // Compute Averages
-    const avgCorrectness = (totals.correctness / totalQuestions).toFixed(1);
-    const avgCommunication = (totals.communication / totalQuestions).toFixed(1);
-    const avgConfidence = (totals.confidence / totalQuestions).toFixed(1);
+    // Compute Averages - Added safety check for division by zero
+    const avgCorrectness = totalQuestions > 0 ? (totals.correctness / totalQuestions).toFixed(1) : "0.0";
+    const avgCommunication = totalQuestions > 0 ? (totals.communication / totalQuestions).toFixed(1) : "0.0";
+    const avgConfidence = totalQuestions > 0 ? (totals.confidence / totalQuestions).toFixed(1) : "0.0";
 
     // Final Overall Score (Average of the three metrics)
     const finalScore = ((parseFloat(avgCorrectness) + parseFloat(avgCommunication) + parseFloat(avgConfidence)) / 3).toFixed(1);
 
     /* ----------------------------------
-       AI SUMMARY & VERDICT GENERATION
+        AI SUMMARY & VERDICT GENERATION
     ---------------------------------- */
     const summaryMessages = [
       {
@@ -519,14 +519,14 @@ Return JSON format:
       // Fallback object in case of parsing failure
       parsedSummary = { 
         verdict: finalScore >= 7 ? "Hire" : "No Hire", 
-        summary: "Analysis complete. Performance met standard thresholds.", 
+        summary: "Assessment complete. Performance met standard thresholds.", 
         strengths: [], 
         weaknesses: [] 
       };
     }
 
     /* ----------------------------------
-       UPDATE INTERVIEW DOCUMENT
+        UPDATE INTERVIEW DOCUMENT
     ---------------------------------- */
     interview.status = "completed";
     interview.finalResult = {
@@ -539,9 +539,14 @@ Return JSON format:
 
     await interview.save();
 
+    // 💡 SUGGESTION: Spread the finalResult AND include the questions array 
+    // so the Dashboard can render graphs and the breakdown list.
     res.json({
       success: true,
-      result: interview.finalResult
+      result: {
+        ...interview.finalResult,
+        questions: interview.questions // <-- This fixes your empty graphs/breakdown
+      }
     });
 
   } catch (error) {

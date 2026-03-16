@@ -108,7 +108,7 @@ function Navbar() {
                 </p>
 
                 <button
-                  onClick={() => navigate("/pricing")}
+                  onClick={() => navigate("/", { state: { purchaseCredits: true } })}
                   className="w-full bg-black text-white py-2 rounded-lg text-sm"
                 >
                   Purchase Credits
@@ -145,12 +145,6 @@ function Navbar() {
                   {userData?.user?.name}
                 </p>
 
-                <button
-                  onClick={() => navigate("/history")}
-                  className="w-full text-left text-sm py-2 hover:text-black text-gray-600"
-                >
-                  Interview History
-                </button>
 
                 <button
                   onClick={handleLogout}
