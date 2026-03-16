@@ -3,7 +3,6 @@ import genToken from "../config/token.js";
 
 export const googleAuth = async (req, res) => {
   try {
-
     const { name, email } = req.body;
 
     if (!name || !email) {
@@ -25,19 +24,17 @@ export const googleAuth = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 3600000
+      secure: true,          // required for HTTPS (Render uses HTTPS)
+      sameSite: "none",      // required for cross-origin cookies
+      maxAge: 1000 * 60 * 60 // 1 hour
     });
 
     return res.status(200).json({
       message: "Google authentication successful",
-      token,
       user
     });
 
   } catch (error) {
-
     console.error("Google authentication error:", error);
 
     return res.status(500).json({
@@ -53,8 +50,8 @@ export const logout = (req, res) => {
 
     res.clearCookie("token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax"
+      secure: true,
+      sameSite: "none"
     });
 
     return res.status(200).json({
