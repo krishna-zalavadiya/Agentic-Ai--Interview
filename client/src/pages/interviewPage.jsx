@@ -3,7 +3,7 @@ import Step1SetUp from '../components/Step1SetUp'
 import Step2Interview from '../components/Step2Interview'
 import Step3Report from '../components/Step3Report'
 
-function InterviewReport() {
+function InterviewPage() {
 
   const [step, setStep] = React.useState(1);
   const [interviewData, setInterviewData] = React.useState(null);
@@ -39,4 +39,4 @@ function InterviewReport() {
   )
 }
 
-export default InterviewReport;
+export default InterviewPage;
