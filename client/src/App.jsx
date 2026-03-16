@@ -6,7 +6,7 @@ import { useDispatch } from "react-redux";
 import { setUserData, clearUserData } from "./redux/userSlice";
 import InterviewPage from "./pages/InterviewPageAi";
 export const ServerUrl = "https://agentic-ai-interview.onrender.com";
-
+import './index.css'
 function App() {
 
   const dispatch = useDispatch();
